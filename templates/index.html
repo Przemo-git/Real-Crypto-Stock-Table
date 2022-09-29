@@ -1,0 +1,145 @@
+{#<!-- 1 faza javascript przechwycenie do konsoli  sprawdź, natępnie dodaj funkcje js-->#}
+{#<html>#}
+{#    <head>#}
+{#        <style>#}
+{#            #customers {#}
+{#              font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;#}
+{#              border-collapse: collapse;#}
+{#              width: 100%;#}
+{#            }#}
+{##}
+{#            #customers td, #customers th {#}
+{#              border: 1px solid #ddd;#}
+{#              padding: 8px;#}
+{#            }#}
+{##}
+{#            #customers tr:nth-child(even){background-color: #f2f2f2;}#}
+{##}
+{#            #customers tr:hover {background-color: #ddd;}#}
+{##}
+{#            #customers th {#}
+{#              padding-top: 12px;#}
+{#              padding-bottom: 12px;#}
+{#              text-align: left;#}
+{#              background-color: #4CAF50;#}
+{#              color: white;#}
+{#            }#}
+{#            </style>#}
+{#    </head>#}
+{#<script>#}
+{##}
+{#</script>#}
+{##}
+{#    <body>#}
+{#        <h1>Real-time Table</h1>#}
+{#        <table id="customers">#}
+{##}
+{#        </table>#}
+{#    </body>#}
+{#    <script>#}
+{#        let tableheader = {{tableheader | safe}};#}
+{#        let tableBodyData= {{data | safe}};#}
+{##}
+{#        function createHeader(table,headervalues){#}
+{#            let tHead = table.createTHead();#}
+{#            let trow = tHead.insertRow();#}
+{#            for (val in headervalues){#}
+{#                console.log(headervalues[val]);#}
+{#                let th =document.createElement('th');#}
+{#                let text = document.createTextNode(headervalues[val]);#}
+{#                th.appendChild(text);#}
+{#                trow.appendChild(th);#}
+{#            }#}
+{#        }#}
+{##}
+{##}
+{##}
+{#        var tableContent = document.getElementById('customers');#}
+{#        createHeader(tableContent,tableheader);#}
+{##}
+{##}
+{##}
+{#    </script>#}
+{#</html>#}
+
+
+{% extends 'basic.html' %}
+
+<!-- 2 faza wersja final-->
+
+{% block body %}
+<script>
+    let socket = new WebSocket('ws://localhost:8000/ws/tableData/');
+    socket.onopen = function(e){
+        alert('Connection established');
+    };
+
+    socket.onmessage = function(e){
+        console.log(e['data']);
+        //recData receivedData
+        var recData = JSON.parse(e.data);
+        tableBodyData[recData['indexName']]['price']=recData['value'];  //json.dumps
+        tableBodyData[recData['indexName']]['marketcap']=recData['marketvalue'];  //json.dumps
+        tableBodyData[recData['indexName']]['volume']=recData['volumevalue'];  //json.dumps
+        console.log(tableBodyData[recData['indexName']]['price']);
+        tableContent=document.getElementById("customers");
+        tableContent.innerHTML = "";
+        createHeader(tableContent,tableheader);
+        createtableBody(tableContent,tableBodyData)
+
+    };
+
+    socket.onclose= function(e){
+        alert('Connection closed');
+    };
+    // po tej funkcji powinno zadziałać w konsoli
+</script>
+
+
+        <h1>Real-time Table</h1>
+        <table class="table" id="customers">
+
+
+
+    <script>
+        let tableheader = {{tableheader | safe}};
+        let tableBodyData= {{data | safe}};
+
+        function createHeader(table,headervalues){
+            let tHead = table.createTHead();
+            let trow = tHead.insertRow();
+            for (val in headervalues){
+                console.log(headervalues[val]);
+                let th =document.createElement('th');
+                let text = document.createTextNode(headervalues[val]);
+                th.appendChild(text);
+                trow.appendChild(th);
+            }
+        }
+
+        function createtableBody(table,data){
+            for (element in data){
+                let row = table.insertRow();
+                for (key in data[element]){
+                    let cell = row.insertCell();
+                    let text = document.createTextNode(data[element][key]);
+                    cell.appendChild(text);
+                }
+            }
+        }
+
+        var tableContent = document.getElementById('customers');
+        createHeader(tableContent,tableheader);
+        createtableBody(tableContent,tableBodyData);
+
+
+    </script>
+        </table>
+
+{% endblock %}
+
+
+
+
+
+
